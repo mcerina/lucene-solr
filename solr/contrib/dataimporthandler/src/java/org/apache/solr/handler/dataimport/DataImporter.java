@@ -320,13 +320,18 @@ public class DataImporter {
   }
     
   @SuppressWarnings("unchecked")
-  private DIHProperties createPropertyWriter() {
+  private DIHProperties createPropertyWriter(RequestInfo requestParams) {
     DIHProperties propWriter = null;
     PropertyWriter configPw = config.getPropertyWriter();
     try {
       Class<DIHProperties> writerClass = DocBuilder.loadClass(configPw.getType(), this.core);
       propWriter = writerClass.newInstance();
-      propWriter.init(this, configPw.getParameters());
+      Map<String, String> params = new HashMap<>();
+      params.putAll(configPw.getParameters());
+      for (Map.Entry<String, Object> rawParam : requestParams.getRawParams().entrySet()) {
+        params.put(rawParam.getKey(), rawParam.getValue().toString());
+      }
+      propWriter.init(this, params);
     } catch (Exception e) {
       throw new DataImportHandlerException(DataImportHandlerException.SEVERE, "Unable to PropertyWriter implementation:" + configPw.getType(), e);
     }
@@ -409,7 +414,7 @@ public class DataImporter {
     LOG.info("Starting Full Import");
     setStatus(Status.RUNNING_FULL_DUMP);
     try {
-      DIHProperties dihPropWriter = createPropertyWriter();
+      DIHProperties dihPropWriter = createPropertyWriter(requestParams);
       setIndexStartTime(dihPropWriter.getCurrentTimestamp());
       docBuilder = new DocBuilder(this, writer, dihPropWriter, requestParams);
       checkWritablePersistFile(writer, dihPropWriter);
@@ -437,7 +442,7 @@ public class DataImporter {
     LOG.info("Starting Delta Import");
     setStatus(Status.RUNNING_DELTA_DUMP);
     try {
-      DIHProperties dihPropWriter = createPropertyWriter();
+      DIHProperties dihPropWriter = createPropertyWriter(requestParams);
       setIndexStartTime(dihPropWriter.getCurrentTimestamp());
       docBuilder = new DocBuilder(this, writer, dihPropWriter, requestParams);
       checkWritablePersistFile(writer, dihPropWriter);
@@ -510,7 +515,7 @@ public class DataImporter {
   }
 
   public DocBuilder getDocBuilder(DIHWriter writer, RequestInfo requestParams) {
-    DIHProperties dihPropWriter = createPropertyWriter();
+    DIHProperties dihPropWriter = createPropertyWriter(requestParams);
     return new DocBuilder(this, writer, dihPropWriter, requestParams);
   }
 

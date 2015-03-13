@@ -81,7 +81,7 @@ public class SimplePropertiesWriter extends DIHProperties {
   @Override
   public void init(DataImporter dataImporter, Map<String, String> params) {
     if(params.get(FILENAME) != null) {
-      filename = params.get(FILENAME);
+      filename = createVariableResolver(params).replaceTokens(params.get(FILENAME));
     } else if(dataImporter.getHandlerName()!=null) {
       filename = dataImporter.getHandlerName() +  ".properties";
     } else {
@@ -108,6 +108,11 @@ public class SimplePropertiesWriter extends DIHProperties {
       dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", locale);
     }    
   }  
+
+  protected VariableResolver createVariableResolver(Map<String, String> params) {
+    return new VariableResolver(new HashMap<String,Object>(params));
+  }
+
   protected void findDirectory(DataImporter dataImporter, Map<String, String> params) {
     if(params.get(DIRECTORY) != null) {
       configDir = params.get(DIRECTORY);
